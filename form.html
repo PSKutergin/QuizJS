@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./assets/styles/common.css">
+    <link rel="stylesheet" href="./assets/styles/form.css">
+    <script src="./scripts/form.js" defer></script>
+    <title>Регистрация</title>
+</head>
+
+<body>
+
+    <header class=" header">
+        <section class="container">
+            <section class="logo">
+                <img src="./assets/images/logo.png" alt="logo">
+            </section>
+        </section>
+    </header>
+
+    <section class="form">
+        <section class="container">
+            <section class="form-content">
+                <h1 class="form-title common-title">Введите свои <span>данные</span></h1>
+                <section class="form-details">
+                    <section class="form-group">
+                        <input type="text" class="form-input" id="name" required>
+                        <label for="name" class="form-label">Имя</label>
+                    </section>
+                    <section class="form-group">
+                        <input type="text" class="form-input" id="last-name" required>
+                        <label for="last-name" class="form-label">Фамилия</label>
+                    </section>
+                    <section class="form-group">
+                        <input type="text" class="form-input" id="email" required>
+                        <label for="email" class="form-label">Электронная почта</label>
+                    </section>
+                    <section class="form-agree">
+                        <input type="checkbox" id="agree" required>
+                        <label for="agree">
+                            Я ознакомлен <a href="#">с правилами сайта</a>
+                        </label>
+                    </section>
+                </section>
+                <section class="form-button">
+                    <button class="button" disabled id="process">Перейти к выбору теста</button>
+                </section>
+            </section>
+            <section class="form-images">
+                <img src="./assets/images/info_image.png" alt="Info image">
+            </section>
+        </section>
+    </section>
+
+    <footer class="footer">
+        «АйтилогияQuiz» © Все права защищены / 2022
+    </footer>
+
+</body>
+
+</html>

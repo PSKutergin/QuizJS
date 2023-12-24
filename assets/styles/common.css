@@ -1,0 +1,100 @@
+@font-face {
+    font-family: 'MuseoSansCyrl';
+    src: url('../fonts/MuseoSansCyrl500.ttf');
+}
+
+@font-face {
+    font-family: 'MuseoSansCyrlBold';
+    src: url('../fonts/MuseoSansCyrl700.ttf');
+}
+
+body {
+    margin: 0;
+    font-family: 'MuseoSansCyrl', sans-serif;
+    color: #333;
+}
+
+a {
+    color: #6933DC;
+    text-decoration-line: underline;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.header {
+    padding: 42px 0 40px;
+    border-bottom: 1px solid #DCDCF3;
+}
+
+.button {
+    border-radius: 6px;
+    background: #6933DC;
+    padding: 14px 35px;
+    color: #FFF;
+    font-size: 17px;
+    border: none;
+    cursor: pointer;
+    transition: .4s;
+    text-decoration: none;
+}
+
+a.button {
+    display: inline-block;
+}
+
+.button:hover {
+    background: #32098a;
+}
+
+.button:disabled {
+    background: #e2dfe7;
+    cursor: not-allowed;
+}
+
+.button-transparent {
+    background: transparent;
+    color: #6933DC;
+    border: 1px solid #6933DC;
+}
+
+.button-transparent:hover {
+    background: #6933DC;
+    color: #FFF;
+}
+
+.button-transparent:disabled {
+    background: transparent;
+    color: #e2dfe7;
+    border: 1px solid #e2dfe7;
+    cursor: not-allowed;
+}
+
+.footer {
+    text-align: center;
+    padding: 40px 0;
+    font-size: 13px;
+    line-height: 16px;
+    color: #DCDCF3;
+}
+
+.big-title {
+    font-family: 'MuseoSansCyrlBold', sans-serif;
+    font-size: 54px;
+}
+
+.big-title span {
+    color: #6933DC;
+}
+
+.common-title {
+    font-family: 'MuseoSansCyrlBold', sans-serif;
+    font-size: 48px;
+    line-height: 58px;
+}
+
+.common-title span {
+    color: #6933DC;
+}
