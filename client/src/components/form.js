@@ -1,22 +1,10 @@
 export class Form {
-    constructor() {
+    constructor(page) {
         this.agreeElement = null;
         this.processElement = null;
+        this.page = page;
+
         this.fields = [
-            {
-                name: 'name',
-                id: 'name',
-                element: null,
-                regex: /^[А-Я][а-я]+\s*$/,
-                valid: false,
-            },
-            {
-                name: 'lastName',
-                id: 'last-name',
-                element: null,
-                regex: /^[А-Я][а-я]+\s*$/,
-                valid: false,
-            },
             {
                 name: 'email',
                 id: 'email',
@@ -24,7 +12,33 @@ export class Form {
                 regex: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
                 valid: false,
             },
+            {
+                name: 'password',
+                id: 'password',
+                element: null,
+                regex: /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,}$/,
+                valid: false,
+            },
         ];
+
+        if (this.page === 'signup') {
+            this.fields.unshift(
+                {
+                    name: 'name',
+                    id: 'name',
+                    element: null,
+                    regex: /^[А-Я][а-я]+\s*$/,
+                    valid: false,
+                },
+                {
+                    name: 'lastName',
+                    id: 'last-name',
+                    element: null,
+                    regex: /^[А-Я][а-я]+\s*$/,
+                    valid: false,
+                },
+            );
+        }
         const that = this;
         this.fields.forEach(item => {
             item.element = document.getElementById(item.id);
@@ -38,9 +52,11 @@ export class Form {
             that.processForm();
         }
 
-        this.agreeElement = document.getElementById('agree');
-        this.agreeElement.onchange = function () {
-            that.validateForm();
+        if (this.page === 'signup') {
+            this.agreeElement = document.getElementById('agree');
+            this.agreeElement.onchange = function () {
+                that.validateForm();
+            }
         }
     }
     validateField(field, element) {
@@ -56,7 +72,7 @@ export class Form {
     }
     validateForm() {
         const validForm = this.fields.every(item => item.valid);
-        const isValid = this.agreeElement.checked && validForm
+        const isValid = this.agreeElement ? this.agreeElement.checked && validForm : validForm
 
         if (isValid) {
             this.processElement.removeAttribute('disabled')

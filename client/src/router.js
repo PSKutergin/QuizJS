@@ -24,9 +24,9 @@ export class Router {
                 }
             },
             {
-                route: '#/form',
+                route: '#/login',
                 title: 'Вход в систему',
-                template: 'templates/form.html',
+                template: 'templates/login.html',
                 styles: 'assets/styles/form.css',
                 load: () => {
                     new Form('login');
