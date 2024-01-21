@@ -1,3 +1,7 @@
+import { CustomHttp } from "../services/custom-http.js";
+import { Auth } from "../services/auth.js";
+import config from "../config/config.js";
+
 export class Form {
     constructor(page) {
         this.agreeElement = null;
@@ -82,16 +86,49 @@ export class Form {
 
         return isValid
     }
-    processForm() {
+    async processForm() {
         if (this.validateForm()) {
-            let user = {};
+            const email = this.fields.find(item => item.name === 'email').element.value;
+            const password = this.fields.find(item => item.name === 'password').element.value;
 
-            this.fields.forEach(item => {
-                user[item.name] = item.element.value;
-            });
+            if (this.page === 'signup') {
+                try {
+                    const result = await CustomHttp.request(config.host + '/signup', 'POST', {
+                        name: this.fields.find(item => item.name === 'name').element.value,
+                        lastName: this.fields.find(item => item.name === 'lastName').element.value,
+                        email: email,
+                        password: password,
+                    })
 
-            sessionStorage.setItem('user', JSON.stringify(user));
-            location.href = '#/choice';
+                    if (result) {
+                        if (result.error || !result.user) {
+                            throw new Error(result.message);
+                        }
+                    }
+
+                } catch (error) {
+                    return console.log(error);
+                }
+            }
+
+            try {
+                const result = await CustomHttp.request(config.host + '/login', 'POST', {
+                    email: email,
+                    password: password,
+                })
+
+                if (result) {
+                    if (result.error || !result.userId || !result.accessToken || !result.refreshToken || !result.fullName) {
+                        throw new Error(result.message);
+                    }
+
+                    Auth.setTokens(result.accessToken, result.refreshToken);
+                    location.href = '#/choice';
+                }
+
+            } catch (error) {
+                console.log(error);
+            }
         }
     }
 }

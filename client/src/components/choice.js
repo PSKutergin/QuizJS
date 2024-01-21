@@ -1,31 +1,35 @@
-import { checkUserData } from '../utils/common.js';
+import { CustomHttp } from '../services/custom-http.js';
+import config from '../config/config.js';
 
 export class Choice {
     constructor() {
         this.quizzes = [];
-        checkUserData();
 
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', 'https://testologia.site/get-quizzes', false);
-        xhr.send();
+        this.init()
+    }
 
-        if (xhr.status === 200 && xhr.responseText) {
-            try {
-                this.quizzes = JSON.parse(xhr.responseText)
-            } catch (error) {
-                location.href = '#/'
+    async init() {
+        try {
+            const result = await CustomHttp.request(config.host + '/tests');
+
+            if (result) {
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+
+                this.quizzes = result;
+                this.processQuizzes();
             }
 
-            this.processQuizzes();
-        } else {
-            location.href = '#/'
+        } catch (error) {
+            console.log(error);
         }
     }
 
     processQuizzes() {
-        const choiceOptionsElement = document.getElementById('choice-options');
-
         if (this.quizzes && this.quizzes.length > 0) {
+            const choiceOptionsElement = document.getElementById('choice-options');
+
             this.quizzes.forEach(quiz => {
                 const that = this;
                 const choiceOptionElement = document.createElement('section');
