@@ -15,12 +15,21 @@ export class Router {
                 load: () => { }
             },
             {
-                route: '#/form',
+                route: '#/signup',
                 title: 'Регистрация',
+                template: 'templates/signup.html',
+                styles: 'assets/styles/form.css',
+                load: () => {
+                    new Form('signup');
+                }
+            },
+            {
+                route: '#/form',
+                title: 'Вход в систему',
                 template: 'templates/form.html',
                 styles: 'assets/styles/form.css',
                 load: () => {
-                    new Form();
+                    new Form('login');
                 }
             },
             {
