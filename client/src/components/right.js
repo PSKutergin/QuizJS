@@ -1,53 +1,44 @@
-import { checkUserData } from '../utils/common.js';
+import config from "../config/config.js";
+import { Auth } from "../services/auth.js";
+import { CustomHttp } from "../services/custom-http.js";
 
 export class Right {
     constructor() {
         this.quiz = null;
-        this.answers = null;
         this.questionsElement = null;
+        this.userInfo = null;
+        this.init();
+    }
 
-        checkUserData();
-        const user = JSON.parse(sessionStorage.getItem('user'));
+    async init() {
+        this.userInfo = Auth.getUserInfo();
 
-        if (user.testId) {
-            const xhr = new XMLHttpRequest();
-            xhr.open('GET', 'https://testologia.site/get-quiz?id=' + user.testId, false);
-            xhr.send();
+        if (this.userInfo) {
+            try {
+                const result = await CustomHttp.request(config.host + '/tests/' + this.userInfo.testId + '/result/details?userId=' + this.userInfo.userId);
 
-            if (xhr.status === 200 && xhr.responseText) {
-                try {
-                    this.quiz = JSON.parse(xhr.responseText)
-                } catch (error) {
-                    location.href = '#/'
-                }
-
-                xhr.open('GET', 'https://testologia.site/get-quiz-right?id=' + user.testId, false);
-                xhr.send();
-
-                if (xhr.status === 200 && xhr.responseText) {
-                    try {
-                        this.answers = JSON.parse(xhr.responseText)
-                    } catch (error) {
-                        location.href = '#/'
+                if (result) {
+                    if (result.error) {
+                        throw new Error(result.error);
                     }
 
-                    this.renderData(user);
-                } else {
-                    location.href = '#/'
+                    this.quiz = result.test;
+                    this.renderData()
                 }
-            } else {
-                location.href = '#/'
+
+            } catch (error) {
+                console.log(error);
             }
         } else {
             location.href = '#/';
         }
     }
 
-    renderData(user) {
+    renderData() {
         this.questionsElement = document.getElementById('questions');
 
         document.getElementById('test-title').innerText = this.quiz.name;
-        document.getElementById('user').innerText = `${user.name} ${user.lastName}, ${user.email}`;
+        document.getElementById('user').innerText = `${this.userInfo.fullName}, ${this.userInfo.email}`;
 
         this.quiz.questions.forEach((question, index) => {
             const questionId = index + 1;
@@ -64,9 +55,7 @@ export class Right {
             const answerOptionsElement = document.createElement('section');
             answerOptionsElement.className = 'right-question-options';
 
-            const userAnswer = user.results.find(result => result.questionId === question.id);
-
-            question.answers.forEach(answer => {
+            question.answers.forEach(currentAnswer => {
                 const answerElement = document.createElement('section');
                 answerElement.className = 'right-question-option';
 
@@ -75,15 +64,13 @@ export class Right {
 
                 const answerTextElement = document.createElement('section');
                 answerTextElement.className = 'right-progress-bar-item-text';
-                answerTextElement.innerText = answer.answer;
+                answerTextElement.innerText = currentAnswer.answer;
 
-                if (userAnswer) {
-                    if (answer.id === userAnswer.chosenAnswerId && userAnswer.chosenAnswerId === this.answers[index]) {
-                        answerElement.classList.add('right');
-                    } else if ((answer.id === userAnswer.chosenAnswerId && userAnswer.chosenAnswerId !== this.answers[index])) {
-                        answerElement.classList.add('wrong');
-                    }
-                };
+                if (currentAnswer.correct === true) {
+                    answerElement.classList.add('right');
+                } else if (currentAnswer.correct === false) {
+                    answerElement.classList.add('wrong');
+                }
 
                 answerElement.appendChild(answerCircleElement);
                 answerElement.appendChild(answerTextElement);

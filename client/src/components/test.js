@@ -1,4 +1,6 @@
-import { checkUserData } from '../utils/common.js';
+import config from "../config/config.js";
+import { Auth } from "../services/auth.js";
+import { CustomHttp } from "../services/custom-http.js";
 
 export class Test {
     constructor() {
@@ -9,30 +11,31 @@ export class Test {
         this.passButtonElement = null;
         this.prevButtonElement = null;
         this.quiz = null;
+        this.interval = null;
         this.currentQuestionIndex = 1;
         this.userResult = [];
+        this.init()
+    }
 
-        checkUserData();
-        const user = JSON.parse(sessionStorage.getItem('user'));
+    async init() {
+        const userInfo = Auth.getUserInfo();
 
-        if (user.testId) {
-            const xhr = new XMLHttpRequest();
-            xhr.open('GET', 'https://testologia.site/get-quiz?id=' + user.testId, false);
-            xhr.send();
+        if (userInfo.testId) {
+            try {
+                const result = await CustomHttp.request(config.host + '/tests/' + userInfo.testId);
 
-            if (xhr.status === 200 && xhr.responseText) {
-                try {
-                    this.quiz = JSON.parse(xhr.responseText)
-                } catch (error) {
-                    location.href = '#/'
+                if (result) {
+                    if (result.error) {
+                        throw new Error(result.error);
+                    }
+
+                    this.quiz = result;
+                    this.startQuiz();
                 }
 
-                this.startQuiz();
-            } else {
-                location.href = '#/'
+            } catch (error) {
+                console.log(error);
             }
-        } else {
-            location.href = '#/';
         }
     }
     startQuiz() {
@@ -53,12 +56,12 @@ export class Test {
 
         let seconds = 59;
         const timerElement = document.getElementById('timer');
-        const interval = setInterval(function () {
+        this.interval = setInterval(function () {
             seconds--;
             timerElement.innerText = seconds;
 
             if (seconds === 0) {
-                clearInterval(interval);
+                clearInterval(this.interval);
                 this.complete();
             }
         }.bind(this), 1000)
@@ -174,6 +177,7 @@ export class Test {
         };
 
         if (this.currentQuestionIndex > this.quiz.questions.length) {
+            clearInterval(this.interval);
             this.complete();
             return;
         }
@@ -193,39 +197,29 @@ export class Test {
 
         this.showQuestion();
     }
-    complete() {
-        const user = JSON.parse(sessionStorage.getItem('user'));
+    async complete() {
+        const userInfo = Auth.getUserInfo();
+        if (!userInfo.testId) {
+            location.href = '#/';
+            return;
+        }
 
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://testologia.site/pass-quiz?id=' + user.testId, false);
-        xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
-        xhr.send(JSON.stringify({
-            name: user.name,
-            lastName: user.lastName,
-            email: user.email,
-            results: this.userResult
-        }));
-
-        if (xhr.status === 200 && xhr.responseText) {
-            let result = null;
-
-            try {
-                result = JSON.parse(xhr.responseText)
-            } catch (error) {
-                location.href = '#/'
-            }
+        try {
+            const result = await CustomHttp.request(config.host + '/tests/' + userInfo.testId + '/pass', 'POST', {
+                userId: userInfo.userId,
+                results: this.userResult
+            });
 
             if (result) {
-                user.score = result.score;
-                user.total = result.total;
-                user.results = this.userResult;
-                sessionStorage.setItem('user', JSON.stringify(user));
+                if (result.error) {
+                    throw new Error(result.error);
+                }
 
                 location.href = '#/result';
             }
-        } else {
-            location.href = '#/'
-        };
 
+        } catch (error) {
+            console.log(error);
+        }
     }
 };

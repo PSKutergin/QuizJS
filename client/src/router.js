@@ -3,9 +3,16 @@ import { Choice } from './components/choice.js';
 import { Test } from './components/test.js';
 import { Result } from './components/result.js';
 import { Right } from './components/right.js';
+import { Auth } from './services/auth.js';
 
 export class Router {
     constructor() {
+        this.contentElement = document.getElementById('content');
+        this.styleElement = document.getElementById('styles');
+        this.titleElement = document.getElementById('page-title');
+        this.profileElement = document.getElementById('profile');
+        this.profileUserElement = document.getElementById('profile-user');
+
         this.routes = [
             {
                 route: '#/',
@@ -72,16 +79,35 @@ export class Router {
     }
 
     async openRoute() {
-        const newRoute = this.routes.find(item => item.route === window.location.hash.split('?')[0]);
+        const urlRoute = window.location.hash.split('?')[0];
+
+        if (urlRoute === '#/logout') {
+            await Auth.logout();
+            window.location.hash = '#/';
+            return;
+        }
+
+        const newRoute = this.routes.find(item => item.route === urlRoute);
 
         if (!newRoute) {
             window.location.hash = '#/';
             return;
         };
 
-        document.getElementById('content').innerHTML = await fetch(newRoute.template).then(res => res.text());
-        document.getElementById('styles').setAttribute('href', newRoute.styles);
-        document.getElementById('page-title').innerText = newRoute.title;
+        this.contentElement.innerHTML = await fetch(newRoute.template).then(res => res.text());
+        this.styleElement.setAttribute('href', newRoute.styles);
+        this.titleElement.innerText = newRoute.title;
+
+        const userInfo = Auth.getUserInfo();
+        const accessToken = localStorage.getItem(Auth.accessTokenKey);
+
+        if (userInfo && accessToken) {
+            this.profileElement.style.display = 'flex';
+            this.profileUserElement.innerText = userInfo.fullName;
+        } else {
+            this.profileElement.style.display = 'none';
+        }
+
         newRoute.load();
     }
 }
