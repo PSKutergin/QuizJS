@@ -8,23 +8,23 @@ const UserModel = require('../models/user.model');
 class AuthController {
     static async signUp(req, res) {
         try {
-            const {error} = ValidationUtils.signupValidation(req.body);
+            const { error } = ValidationUtils.signupValidation(req.body);
 
             if (error) {
-                return res.status(400).json({error: error.details[0].message});
+                return res.status(400).json({ error: true, message: error.details[0].message });
             }
 
-            let user = UserModel.findOne({email: req.body.email});
+            let user = UserModel.findOne({ email: req.body.email });
             if (user) {
                 return res.status(400)
-                    .json({error: true, message: "User with given email already exist"});
+                    .json({ error: true, message: "User with given email already exist" });
             }
 
             const salt = await bcrypt.genSalt(Number('example'));
             const hashPassword = await bcrypt.hash(req.body.password, salt);
 
             let id = 1;
-            while (UserModel.findOne({id: id})) {
+            while (UserModel.findOne({ id: id })) {
                 id++;
             }
 
@@ -39,27 +39,27 @@ class AuthController {
             UserModel.create(user);
 
             res.status(201).json({
-                user: {id: user.id, email: user.email, name: user.name, lastName: user.lastName},
+                user: { id: user.id, email: user.email, name: user.name, lastName: user.lastName },
                 error: false,
                 message: "Account created sucessfully"
             });
         } catch (err) {
             console.log(err);
-            res.status(500).json({error: true, message: "Internal Server Error"});
+            res.status(500).json({ error: true, message: "Internal Server Error" });
         }
     }
 
     static async login(req, res) {
         try {
-            const {error} = ValidationUtils.loginValidation(req.body);
+            const { error } = ValidationUtils.loginValidation(req.body);
 
             if (error) {
-                return res.status(400).json({error: error.details[0].message});
+                return res.status(400).json({ error: true, message: error.details[0].message });
             }
 
-            const user = UserModel.findOne({email: req.body.email});
+            const user = UserModel.findOne({ email: req.body.email });
             if (!user) {
-                return res.status(401).json({error: true, message: "Invalid email or password"});
+                return res.status(401).json({ error: true, message: "Invalid email or password" });
             }
 
             const verifiedPassword = await bcrypt.compare(
@@ -67,10 +67,10 @@ class AuthController {
                 user.password
             );
             if (!verifiedPassword) {
-                return res.status(401).json({error: true, message: "Invalid email or password"});
+                return res.status(401).json({ error: true, message: "Invalid email or password" });
             }
 
-            const {accessToken, refreshToken} = await TokenUtils.generateTokens(user);
+            const { accessToken, refreshToken } = await TokenUtils.generateTokens(user);
 
             res.status(200).json({
                 error: false,
@@ -82,20 +82,20 @@ class AuthController {
             });
         } catch (err) {
             console.log(err);
-            res.status(500).json({error: true, message: "Internal Server Error"});
+            res.status(500).json({ error: true, message: "Internal Server Error" });
         }
     }
 
     static async refresh(req, res) {
-        const {error} = ValidationUtils.refreshTokenValidation(req.body);
+        const { error } = ValidationUtils.refreshTokenValidation(req.body);
         if (error) {
-            return res.status(400).json({error: error.details[0].message});
+            return res.status(400).json({ error: true, message: error.details[0].message });
         }
 
         try {
-            const {tokenDetails} = await TokenUtils.verifyRefreshToken(req.body.refreshToken);
-            const user = UserModel.findOne({email: tokenDetails.email});
-            const {accessToken, refreshToken} = await TokenUtils.generateTokens(user);
+            const { tokenDetails } = await TokenUtils.verifyRefreshToken(req.body.refreshToken);
+            const user = UserModel.findOne({ email: tokenDetails.email });
+            const { accessToken, refreshToken } = await TokenUtils.generateTokens(user);
 
             res.status(200).json({
                 error: false,
@@ -104,27 +104,30 @@ class AuthController {
                 message: "Tokens created successfully",
             });
         } catch (e) {
-            return res.status(400).json(e);
+            return res.status(400).json({
+                error: true,
+                message: "Invalid refresh token"
+            });
         }
     }
 
     static async logout(req, res) {
         try {
-            const {error} = ValidationUtils.refreshTokenValidation(req.body);
+            const { error } = ValidationUtils.refreshTokenValidation(req.body);
             if (error) {
-                return res.status(400).json({error: error.details[0].message});
+                return res.status(400).json({ error: true, message: error.details[0].message });
             }
-            const user = UserModel.findOne({refreshToken: req.body.refreshToken});
+            const user = UserModel.findOne({ refreshToken: req.body.refreshToken });
             if (!user) {
-                return res.status(200).json({error: false, message: "Logged Out Sucessfully"});
+                return res.status(404).json({ error: false, message: "Not found user" });
             }
 
             UserModel.clearToken(user.email);
 
-            res.status(200).json({error: false, message: "Logged Out Sucessfully"});
+            res.status(200).json({ error: false, message: "Logged Out Sucessfully" });
         } catch (err) {
             console.log(err);
-            res.status(500).json({error: true, message: "Internal Server Error"});
+            res.status(500).json({ error: true, message: "Internal Server Error" });
         }
     }
 
