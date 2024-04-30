@@ -1,83 +1,83 @@
-import { CustomHttp } from '../services/custom-http.js';
-import config from '../config/config.js';
-import { Auth } from '../services/auth.js';
+import { CustomHttp } from '../services/custom-http';
+import config from '../config/config';
+import { Auth } from '../services/auth';
+import { QuezListType } from '../types/quiz-list.type';
+import { TestResultType } from '../types/test-result.type';
+import { UserInfoType } from '../types/user-info.type';
+import { DefaultResponseType } from '../types/default-response.type';
 
 export class Choice {
+    private quizzes: QuezListType[] = [];
+    private restResult: TestResultType[] | null = null;
+
     constructor() {
-        this.quizzes = [];
-        this.restResult = null;
         this.init()
     }
 
-    async init() {
+    private async init(): Promise<void> {
         try {
-            const result = await CustomHttp.request(config.host + '/tests');
-
-            if (result) {
-                if (result.error) {
-                    throw new Error(result.error);
-                }
-
-                this.quizzes = result;
-            }
-
+            this.quizzes = await CustomHttp.request(config.host + '/tests');
         } catch (error) {
-            return console.log(error);
+            console.log(error);
+            return;
         }
 
-        const userInfo = Auth.getUserInfo();
+        const userInfo: UserInfoType | null = Auth.getUserInfo();
         if (userInfo) {
             try {
-                const result = await CustomHttp.request(config.host + '/tests/results?userId=' + userInfo.userId);
+                const result: TestResultType[] | DefaultResponseType = await CustomHttp.request(config.host + '/tests/results?userId=' + userInfo.userId);
 
                 if (result) {
-                    if (result.error) {
-                        throw new Error(result.error);
+                    if ((result as DefaultResponseType).error !== undefined) {
+                        throw new Error((result as DefaultResponseType).message);
                     }
 
-                    this.restResult = result;
+                    this.restResult = result as TestResultType[];
                 }
 
             } catch (error) {
-                return console.log(error);
+                console.log(error);
+                return;
             }
         }
 
         this.processQuizzes();
     }
 
-    processQuizzes() {
-        if (this.quizzes && this.quizzes.length > 0) {
-            const choiceOptionsElement = document.getElementById('choice-options');
-
-            this.quizzes.forEach(quiz => {
-                const that = this;
-                const choiceOptionElement = document.createElement('section');
+    private processQuizzes(): void {
+        const choiceOptionsElement: HTMLElement | null = document.getElementById('choice-options');
+        if (this.quizzes && this.quizzes.length > 0 && choiceOptionsElement) {
+            this.quizzes.forEach((quiz: QuezListType) => {
+                const that: Choice = this;
+                const choiceOptionElement: HTMLElement | null = document.createElement('section');
                 choiceOptionElement.className = 'choice-option';
-                choiceOptionElement.setAttribute('data-id', quiz.id);
+                choiceOptionElement.setAttribute('data-id', quiz.id.toString());
                 choiceOptionElement.onclick = function () {
-                    that.chooseQuiz(this);
+                    that.chooseQuiz(<HTMLElement>this);
                 };
 
-                const choiceOptionTextElement = document.createElement('section');
+                const choiceOptionTextElement: HTMLElement | null = document.createElement('section');
                 choiceOptionTextElement.className = 'choice-option-text';
                 choiceOptionTextElement.innerText = quiz.name;
 
-                const choiceOptionArrowElement = document.createElement('section');
+                const choiceOptionArrowElement: HTMLElement | null = document.createElement('section');
                 choiceOptionArrowElement.className = 'choice-option-arrow';
 
-                const result = this.restResult.find(item => item.testId === quiz.id);
-                if (result) {
-                    const choiceOptionResultElement = document.createElement('section');
-                    choiceOptionResultElement.className = 'choice-option-result';
-                    choiceOptionResultElement.innerHTML = `
+                if (this.restResult) {
+                    const result: TestResultType | undefined = this.restResult.find(item => item.testId === quiz.id);
+                    if (result) {
+                        const choiceOptionResultElement: HTMLElement | null = document.createElement('section');
+                        choiceOptionResultElement.className = 'choice-option-result';
+                        choiceOptionResultElement.innerHTML = `
                         <section>Результат</section>
                         <section>${result.score}/${result.total}</section>
                     `;
-                    choiceOptionElement.appendChild(choiceOptionResultElement);
+                        choiceOptionElement.appendChild(choiceOptionResultElement);
+                    }
                 }
 
-                const choiceOptionImageElement = document.createElement('img');
+
+                const choiceOptionImageElement: HTMLElement | null = document.createElement('img');
                 choiceOptionImageElement.setAttribute('src', 'assets/images/arrow.png');
                 choiceOptionImageElement.setAttribute('alt', 'Arrow');
 
@@ -90,11 +90,11 @@ export class Choice {
         };
     }
 
-    chooseQuiz(element) {
-        const dataId = element.getAttribute('data-id');
-        const userInfo = Auth.getUserInfo();
+    private chooseQuiz(element: HTMLElement): void {
+        const dataId: string | null = element.getAttribute('data-id');
+        const userInfo: UserInfoType | null = Auth.getUserInfo();
 
-        if (dataId) {
+        if (dataId && userInfo) {
             userInfo.testId = dataId;
             Auth.setUserInfo(userInfo);
             location.href = '#/test';

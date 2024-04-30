@@ -1,23 +1,26 @@
-import config from "../config/config.js";
-import { Auth } from "../services/auth.js";
-import { CustomHttp } from "../services/custom-http.js";
+import config from "../config/config";
+import { Auth } from "../services/auth";
+import { CustomHttp } from "../services/custom-http";
+import { DefaultResponseType } from "../types/default-response.type";
+import { PassTestResponseType } from "../types/pass-test-response.type";
+import { UserInfoType } from "../types/user-info.type";
 
 export class Result {
-    showAnswersButtonElement = null;
-    resultScoreElement = null;
+    private showAnswersButtonElement: HTMLElement | null = null;
+    private resultScoreElement: HTMLElement | null = null;
 
     constructor() {
         this.resultScoreElement = document.getElementById('result-score');
         this.showAnswersButtonElement = document.getElementById('show');
 
-        this.showAnswersButtonElement.onclick = function () {
+        if (this.showAnswersButtonElement) this.showAnswersButtonElement.onclick = function () {
             location.href = '#/right';
         }
         this.init();
     }
 
-    async init() {
-        const userInfo = Auth.getUserInfo();
+    private async init(): Promise<void> {
+        const userInfo: UserInfoType | null = Auth.getUserInfo();
 
         if (!userInfo) {
             location.href = '#/';
@@ -26,14 +29,14 @@ export class Result {
 
         if (userInfo.testId) {
             try {
-                const result = await CustomHttp.request(config.host + '/tests/' + userInfo.testId + '/result?userId=' + userInfo.userId);
+                const result: DefaultResponseType | PassTestResponseType = await CustomHttp.request(config.host + '/tests/' + userInfo.testId + '/result?userId=' + userInfo.userId);
 
                 if (result) {
-                    if (result.error) {
-                        throw new Error(result.error);
+                    if ((result as DefaultResponseType).error !== undefined) {
+                        throw new Error((result as DefaultResponseType).message);
                     }
 
-                    this.resultScoreElement.innerText = result.score + '/' + result.total;
+                    if (this.resultScoreElement) this.resultScoreElement.innerText = (result as PassTestResponseType).score + '/' + (result as PassTestResponseType).total;
                     return
                 }
 

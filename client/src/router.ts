@@ -1,11 +1,21 @@
-import { Form } from './components/form.js';
-import { Choice } from './components/choice.js';
-import { Test } from './components/test.js';
-import { Result } from './components/result.js';
-import { Right } from './components/right.js';
-import { Auth } from './services/auth.js';
+import { Form } from './components/form';
+import { Choice } from './components/choice';
+import { Test } from './components/test';
+import { Result } from './components/result';
+import { Right } from './components/right';
+import { Auth } from './services/auth';
+import { RouteType } from './types/route.type';
+import { UserInfoType } from './types/user-info.type';
 
 export class Router {
+    readonly contentElement: HTMLElement | null;
+    readonly styleElement: HTMLElement | null;
+    readonly titleElement: HTMLElement | null;
+    readonly profileElement: HTMLElement | null;
+    readonly profileUserElement: HTMLElement | null;
+
+    private routes: RouteType[];
+
     constructor() {
         this.contentElement = document.getElementById('content');
         this.styleElement = document.getElementById('styles');
@@ -78,28 +88,39 @@ export class Router {
         ]
     }
 
-    async openRoute() {
-        const urlRoute = window.location.hash.split('?')[0];
+    public async openRoute(): Promise<void> {
+        const urlRoute: string = window.location.hash.split('?')[0];
 
         if (urlRoute === '#/logout') {
-            await Auth.logout();
-            window.location.hash = '#/';
-            return;
+            const result: boolean = await Auth.logout();
+            if (result) {
+                window.location.hash = '#/';
+                return;
+            }
         }
 
-        const newRoute = this.routes.find(item => item.route === urlRoute);
+        const newRoute: RouteType | undefined = this.routes.find(item => item.route === urlRoute);
 
         if (!newRoute) {
             window.location.hash = '#/';
             return;
         };
 
+        if (!this.contentElement || !this.styleElement || !this.titleElement || !this.profileElement || !this.profileUserElement) {
+            if (urlRoute === '#/') {
+                return
+            } else {
+                window.location.hash = '#/';
+                return
+            }
+        }
+
         this.contentElement.innerHTML = await fetch(newRoute.template).then(res => res.text());
         this.styleElement.setAttribute('href', newRoute.styles);
         this.titleElement.innerText = newRoute.title;
 
-        const userInfo = Auth.getUserInfo();
-        const accessToken = localStorage.getItem(Auth.accessTokenKey);
+        const userInfo: UserInfoType | null = Auth.getUserInfo();
+        const accessToken: string | null = localStorage.getItem(Auth.accessTokenKey);
 
         if (userInfo && accessToken) {
             this.profileElement.style.display = 'flex';
